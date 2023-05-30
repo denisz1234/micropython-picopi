@@ -1,0 +1,159 @@
+#Modele fonctionnel  avec DEL  RGB 
+# http://192.168.2.85 conect-NB
+
+import network
+import socket
+from time import sleep
+from machine import Pin, PWM
+
+# ssid et motDePasse
+ssid = '#######'
+password = '########'
+
+# DUTY
+d_1 = 65535
+d_2 = 32250
+d_3 = 18125
+
+# Assigne les broches aux DELS
+del_rouge = PWM(Pin(15))
+del_vert = PWM(Pin(14))
+del_bleu = PWM(Pin(13))
+
+del_rouge.freq(1000)
+del_vert.freq(1000)
+del_bleu.freq(1000)
+
+
+
+
+# Fonctions couleurs    
+def rouge():    
+    del_rouge.duty_u16(d_1)    
+    del_vert.duty_u16(0)
+    del_bleu.duty_u16(0)
+        
+def vert():
+    del_rouge.duty_u16(0)    
+    del_vert.duty_u16(d_1)
+    del_bleu.duty_u16(0)
+    
+def arret():
+    del_rouge.duty_u16(0)    
+    del_vert.duty_u16(0)
+    del_bleu.duty_u16(0)
+    
+def bleu():
+    del_rouge.duty_u16(0)    
+    del_vert.duty_u16(0)
+    del_bleu.duty_u16(d_1)
+    
+def jaune():
+    del_rouge.duty_u16(d_2)    
+    del_vert.duty_u16(d_2)
+    del_bleu.duty_u16(0)
+    
+def turquoise():
+    del_rouge.duty_u16(0)    
+    del_vert.duty_u16(d_2)
+    del_bleu.duty_u16(d_2)
+    
+#Arret
+arret()
+
+ #Liaison au WLAN
+def connect():
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(ssid, password)
+    while wlan.isconnected() == False:
+        print('En attente de conection...')
+        sleep(1)
+    ip = wlan.ifconfig()[0]
+    print(f'Connecter sur  {ip}')
+    return ip
+
+# Ouverture d_un  socket
+def open_socket(ip):    
+    address = (ip, 80)
+    connection = socket.socket()
+    connection.bind(address)
+    connection.listen(1)
+    return connection
+
+#Module  HTML
+def webpage():
+    html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <title>wifi_RGB_PWM03</title>
+            
+             </head>
+             
+            <body>
+            
+            <center><b>
+            <form action="./rouge">
+            <input type="submit" value="ROUGE" style="height:120px; width:120px" />
+            </form>
+            <table><tr>
+            <td><form action="./vert">
+            <input type="submit" value="VERT" style="height:120px; width:120px" />
+            </form></td>
+            <td><form action="./arret">
+            <input type="submit"  value="<---ARRET--->" style="color:red"; "height:120px; width:120px";,  />
+            </form></td>
+            <td><form action="./bleu">
+            <input type="submit" value="BLEU" style="height:120px; width:120px" />
+            </form></td>
+            </tr></table>
+            <form action="./jaune">
+            <input type="submit" value="JAUNE" style="height:120px; width:120px" />
+            </form>
+            <form action="./turquoise">
+            <input type="submit" value="TURQUOISE" style="height:120px; width:120px" />
+            </form>
+            <h3 style=font-family:arial color:orange>Cliquez sur une tuile pour activer la couleur du DEL.</h3>
+            
+            </body>
+            </html>
+            """
+    return str(html)
+
+#Demare le serveur web
+def serve(connection):
+    while True:
+        client = connection.accept()[0]
+        request = client.recv(1024)
+        request = str(request)
+        try:
+            request = request.split()[1]
+        except IndexError:
+            pass
+        if request == '/rouge?':
+            rouge()
+        elif request =='/vert?':
+            vert()
+        elif request =='/arret?':
+            arret()
+        elif request =='/bleu?':
+            bleu()
+        elif request =='/jaune?':
+            jaune()
+        elif request =='/turquoise?':
+            turquoise()
+        html = webpage()
+        client.send(html)
+        client.close()
+
+try:
+    ip = connect()
+    connection = open_socket(ip)
+    serve(connection)
+except KeyboardInterrupt:
+    machine.reset()
+    Print("A la Prochaine/Later Aligator")
+
+    
+

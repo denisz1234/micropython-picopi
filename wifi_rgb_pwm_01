@@ -49,8 +49,8 @@ def bleu():
     del_bleu.duty_u16(d_1)
     
 def jaune():
-    del_rouge.duty_u16(d_2)    
-    del_vert.duty_u16(d_2)
+    del_rouge.duty_u16(d_1)    
+    del_vert.duty_u16(d_3)
     del_bleu.duty_u16(0)
     
 def turquoise():
